@@ -1,4 +1,4 @@
-_commit: v1.6.12-8-g50e0997
+_commit: v1.8.2
 _src_path: /home/crthomas/code/charlesthomas/homelab-template
 additionalResources: ''
 backups: false
@@ -9,6 +9,7 @@ helmRelease: node-feature-discovery
 helmRepo: https://kubernetes-sigs.github.io/node-feature-discovery/charts
 helmValues: helm/values.yaml
 helmVersion: ''
+homepageEnabled: false
 ingress: false
 labels: 'app.kubernetes.io/name: node-feature-discovery'
 name: node-feature-discovery
