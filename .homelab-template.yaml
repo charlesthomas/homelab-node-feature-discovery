@@ -1,14 +1,8 @@
 _commit: v1.8.2
 _src_path: /home/crthomas/code/charlesthomas/homelab-template
-additionalResources: ''
+additionalResources: 'jobs.yaml'
 backups: false
-helm: true
-helmCrds: false
-helmName: node-feature-discovery
-helmRelease: node-feature-discovery
-helmRepo: https://kubernetes-sigs.github.io/node-feature-discovery/charts
-helmValues: helm/values.yaml
-helmVersion: ''
+helm: false
 homepageEnabled: false
 ingress: false
 labels: 'app.kubernetes.io/name: node-feature-discovery'
@@ -16,7 +10,14 @@ name: node-feature-discovery
 namespace: node-feature-discovery
 pvc: false
 reloader: false
-resources: []
+resources:
+- configmaps.yaml
+- crds.yaml
+- daemonsets.yaml
+- deployments.yaml
+- rbac.yaml
+- service-accounts.yaml
+
 service: false
 serviceAccount: false
 upstreamURL: https://kubernetes-sigs.github.io/node-feature-discovery/stable/get-started/index.html

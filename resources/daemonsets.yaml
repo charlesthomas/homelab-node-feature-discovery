@@ -1,0 +1,238 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-feature-discovery-topology-updater
+  namespace: node-feature-discovery
+  labels:
+    app.kubernetes.io/instance: node-feature-discovery
+    app.kubernetes.io/name: node-feature-discovery
+    role: topology-updater
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: node-feature-discovery
+      app.kubernetes.io/name: node-feature-discovery
+      role: topology-updater
+  template:
+    metadata:
+      annotations:
+        checksum/config: 554b2704b09ea1913744141cc977f013f3eba03e73d2bab762548f93393fb109
+        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
+      labels:
+        app.kubernetes.io/instance: node-feature-discovery
+        app.kubernetes.io/name: node-feature-discovery
+        role: topology-updater
+    spec:
+      containers:
+        - args:
+            - -podresources-socket=/host-var/lib/kubelet-podresources/kubelet.sock
+            - -sleep-interval=1m
+            - -watch-namespace=*
+            - -metrics=8081
+            - -grpc-health=8082
+          command:
+            - nfd-topology-updater
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NODE_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            grpc:
+              port: 8082
+            initialDelaySeconds: 10
+          name: topology-updater
+          ports:
+            - containerPort: 8081
+              name: metrics
+            - containerPort: 8082
+              name: health
+          readinessProbe:
+            failureThreshold: 10
+            grpc:
+              port: 8082
+            initialDelaySeconds: 5
+          resources:
+            limits:
+              memory: 60Mi
+            requests:
+              cpu: 50m
+              memory: 40Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /host-var/lib/kubelet-podresources/kubelet.sock
+              name: kubelet-podresources-sock
+            - mountPath: /host-sys
+              name: host-sys
+            - mountPath: /host-var/lib/kubelet
+              name: kubelet-state-files
+              readOnly: true
+            - mountPath: /etc/kubernetes/node-feature-discovery
+              name: nfd-topology-updater-conf
+              readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: false
+      securityContext: {}
+      serviceAccountName: nfd-topology-updater
+      volumes:
+        - hostPath:
+            path: /sys
+          name: host-sys
+        - hostPath:
+            path: /var/lib/kubelet/pod-resources/kubelet.sock
+          name: kubelet-podresources-sock
+        - hostPath:
+            path: /var/lib/kubelet
+          name: kubelet-state-files
+        - configMap:
+            items:
+              - key: nfd-topology-updater.conf
+                path: nfd-topology-updater.conf
+            name: node-feature-discovery-topology-updater-conf
+          name: nfd-topology-updater-conf
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-feature-discovery-worker
+  namespace: node-feature-discovery
+  labels:
+    app.kubernetes.io/instance: node-feature-discovery
+    app.kubernetes.io/name: node-feature-discovery
+    role: worker
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: node-feature-discovery
+      app.kubernetes.io/name: node-feature-discovery
+      role: worker
+  template:
+    metadata:
+      annotations:
+        checksum/config: 1f00062212cb74a7f93ed1c43f122d92235dcb2b74d583aa760cea0ae604d909
+        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
+      labels:
+        app.kubernetes.io/instance: node-feature-discovery
+        app.kubernetes.io/name: node-feature-discovery
+        role: worker
+    spec:
+      containers:
+        - args:
+            - -feature-gates=NodeFeatureGroupAPI=false
+            - -metrics=8081
+            - -grpc-health=8082
+          command:
+            - nfd-worker
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            grpc:
+              port: 8082
+            initialDelaySeconds: 10
+          name: worker
+          ports:
+            - containerPort: 8081
+              name: metrics
+            - containerPort: 8082
+              name: health
+          readinessProbe:
+            failureThreshold: 10
+            grpc:
+              port: 8082
+            initialDelaySeconds: 5
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              cpu: 5m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+            - mountPath: /host-boot
+              name: host-boot
+              readOnly: true
+            - mountPath: /host-etc/os-release
+              name: host-os-release
+              readOnly: true
+            - mountPath: /host-sys
+              name: host-sys
+              readOnly: true
+            - mountPath: /host-usr/lib
+              name: host-usr-lib
+              readOnly: true
+            - mountPath: /host-lib
+              name: host-lib
+              readOnly: true
+            - mountPath: /host-proc/swaps
+              name: host-proc-swaps
+              readOnly: true
+            - mountPath: /etc/kubernetes/node-feature-discovery/features.d/
+              name: features-d
+              readOnly: true
+            - mountPath: /etc/kubernetes/node-feature-discovery
+              name: nfd-worker-conf
+              readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: false
+      securityContext: {}
+      serviceAccountName: nfd-worker
+      volumes:
+        - hostPath:
+            path: /boot
+          name: host-boot
+        - hostPath:
+            path: /etc/os-release
+          name: host-os-release
+        - hostPath:
+            path: /sys
+          name: host-sys
+        - hostPath:
+            path: /usr/lib
+          name: host-usr-lib
+        - hostPath:
+            path: /lib
+          name: host-lib
+        - hostPath:
+            path: /proc/swaps
+          name: host-proc-swaps
+        - hostPath:
+            path: /etc/kubernetes/node-feature-discovery/features.d/
+          name: features-d
+        - configMap:
+            items:
+              - key: nfd-worker.conf
+                path: nfd-worker.conf
+            name: node-feature-discovery-worker-conf
+          name: nfd-worker-conf

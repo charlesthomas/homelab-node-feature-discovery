@@ -1,0 +1,62 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: node-feature-discovery-prune
+  namespace: node-feature-discovery
+  labels:
+    app.kubernetes.io/instance: node-feature-discovery
+    app.kubernetes.io/name: node-feature-discovery
+spec:
+  template:
+    metadata:
+      annotations:
+        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
+      labels:
+        app.kubernetes.io/instance: node-feature-discovery
+        app.kubernetes.io/name: node-feature-discovery
+        role: prune
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: In
+                    values:
+                      - ""
+              weight: 1
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: In
+                    values:
+                      - ""
+              weight: 1
+      containers:
+        - args:
+            - -prune
+          command:
+            - nfd-master
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+          imagePullPolicy: IfNotPresent
+          name: nfd-master
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      restartPolicy: Never
+      serviceAccountName: node-feature-discovery-prune
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Equal
+          value: ""
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Equal
+          value: ""

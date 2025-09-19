@@ -9,10 +9,11 @@ commonLabels:
   app.kubernetes.io/name: node-feature-discovery
 
 resources:
+- resources/configmaps.yaml
+- resources/crds.yaml
+- resources/daemonsets.yaml
+- resources/deployments.yaml
+- resources/jobs.yaml
 - resources/namespaces.yaml
-helmCharts:
-- name: node-feature-discovery
-  namespace: node-feature-discovery
-  releaseName: node-feature-discovery
-  repo: https://kubernetes-sigs.github.io/node-feature-discovery/charts
-  valuesFile: helm/values.yaml
+- resources/rbac.yaml
+- resources/service-accounts.yaml

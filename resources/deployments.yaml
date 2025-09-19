@@ -1,0 +1,170 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-feature-discovery-gc
+  namespace: node-feature-discovery
+  labels:
+    app.kubernetes.io/instance: node-feature-discovery
+    app.kubernetes.io/name: node-feature-discovery
+    role: gc
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: node-feature-discovery
+      app.kubernetes.io/name: node-feature-discovery
+      role: gc
+  template:
+    metadata:
+      annotations:
+        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
+      labels:
+        app.kubernetes.io/instance: node-feature-discovery
+        app.kubernetes.io/name: node-feature-discovery
+        role: gc
+    spec:
+      containers:
+        - args:
+            - -gc-interval=1h
+          command:
+            - nfd-gc
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+          imagePullPolicy: IfNotPresent
+          name: gc
+          ports:
+            - containerPort: 8081
+              name: metrics
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: false
+      securityContext: {}
+      serviceAccountName: nfd-gc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-feature-discovery-master
+  namespace: node-feature-discovery
+  labels:
+    app.kubernetes.io/instance: node-feature-discovery
+    app.kubernetes.io/name: node-feature-discovery
+    role: master
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: node-feature-discovery
+      app.kubernetes.io/name: node-feature-discovery
+      role: master
+  template:
+    metadata:
+      annotations:
+        checksum/config: c963d4d7c5d25a0842b38245b40f0c14e5e4a68f1bbfd17c540c50661f96a8dd
+        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
+      labels:
+        app.kubernetes.io/instance: node-feature-discovery
+        app.kubernetes.io/name: node-feature-discovery
+        role: master
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: In
+                    values:
+                      - ""
+              weight: 1
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: In
+                    values:
+                      - ""
+              weight: 1
+      containers:
+        - args:
+            - -enable-leader-election
+            - -feature-gates=NodeFeatureGroupAPI=false
+            - -metrics=8081
+            - -grpc-health=8082
+          command:
+            - nfd-master
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.3
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            grpc:
+              port: 8082
+          name: master
+          ports:
+            - containerPort: 8081
+              name: metrics
+            - containerPort: 8082
+              name: health
+          readinessProbe:
+            failureThreshold: 10
+            grpc:
+              port: 8082
+          resources:
+            limits:
+              memory: 4Gi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          startupProbe:
+            failureThreshold: 30
+            grpc:
+              port: 8082
+          volumeMounts:
+            - mountPath: /etc/kubernetes/node-feature-discovery
+              name: nfd-master-conf
+              readOnly: true
+      enableServiceLinks: false
+      hostNetwork: false
+      securityContext: {}
+      serviceAccountName: nfd-master
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Equal
+          value: ""
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Equal
+          value: ""
+      volumes:
+        - configMap:
+            items:
+              - key: nfd-master.conf
+                path: nfd-master.conf
+            name: node-feature-discovery-master-conf
+          name: nfd-master-conf
