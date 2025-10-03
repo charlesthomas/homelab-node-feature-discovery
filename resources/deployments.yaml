@@ -33,7 +33,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.4
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.18.0
           imagePullPolicy: IfNotPresent
           name: gc
           ports:
@@ -112,7 +112,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.4
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.18.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             grpc:

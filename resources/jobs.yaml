@@ -39,7 +39,7 @@ spec:
             - -prune
           command:
             - nfd-master
-          image: registry.k8s.io/nfd/node-feature-discovery:v0.17.4
+          image: registry.k8s.io/nfd/node-feature-discovery:v0.18.0
           imagePullPolicy: IfNotPresent
           name: nfd-master
           securityContext:
