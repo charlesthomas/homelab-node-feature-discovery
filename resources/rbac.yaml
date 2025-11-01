@@ -1,11 +1,39 @@
 ---
+# Source: node-feature-discovery/templates/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: release-name-node-feature-discovery-worker
+  namespace: node-feature-discovery
+  labels:
+    helm.sh/chart: node-feature-discovery-0.18.2
+    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: release-name-node-feature-discovery-worker
+subjects:
+  - kind: ServiceAccount
+    name: release-name-node-feature-discovery-worker
+    namespace: node-feature-discovery
+---
+# Source: node-feature-discovery/templates/post-delete-job.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: node-feature-discovery-prune
+  name: release-name-node-feature-discovery-prune
   labels:
-    app.kubernetes.io/instance: node-feature-discovery
+    helm.sh/chart: node-feature-discovery-0.18.2
     app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 rules:
   - apiGroups:
       - ""
@@ -18,161 +46,40 @@ rules:
       - update
       - list
 ---
+# Source: node-feature-discovery/templates/post-delete-job.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-name-node-feature-discovery-prune
+  labels:
+    helm.sh/chart: node-feature-discovery-0.18.2
+    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-name-node-feature-discovery-prune
+subjects:
+  - kind: ServiceAccount
+    name: release-name-node-feature-discovery-prune
+    namespace: node-feature-discovery
+---
+# Source: node-feature-discovery/templates/clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: node-feature-discovery-topology-updater
+  name: release-name-node-feature-discovery
   labels:
-    app.kubernetes.io/instance: node-feature-discovery
+    helm.sh/chart: node-feature-discovery-0.18.2
     app.kubernetes.io/name: node-feature-discovery
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - nodes
-    verbs:
-      - get
-      - list
-  - apiGroups:
-      - ""
-    resources:
-      - namespaces
-    verbs:
-      - get
-  - apiGroups:
-      - ""
-    resources:
-      - nodes/proxy
-    verbs:
-      - get
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
-  - apiGroups:
-      - topology.node.k8s.io
-    resources:
-      - noderesourcetopologies
-    verbs:
-      - create
-      - get
-      - update
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: node-feature-discovery-worker
-  namespace: node-feature-discovery
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: node-feature-discovery-worker
-subjects:
-  - kind: ServiceAccount
-    name: nfd-worker
-    namespace: node-feature-discovery
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-feature-discovery
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: node-feature-discovery
-subjects:
-  - kind: ServiceAccount
-    name: nfd-master
-    namespace: node-feature-discovery
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-feature-discovery-gc
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: node-feature-discovery-gc
-subjects:
-  - kind: ServiceAccount
-    name: nfd-gc
-    namespace: node-feature-discovery
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-feature-discovery-prune
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: node-feature-discovery-prune
-subjects:
-  - kind: ServiceAccount
-    name: node-feature-discovery-prune
-    namespace: node-feature-discovery
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: node-feature-discovery-topology-updater
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: node-feature-discovery-topology-updater
-subjects:
-  - kind: ServiceAccount
-    name: nfd-topology-updater
-    namespace: node-feature-discovery
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: node-feature-discovery-worker
-  namespace: node-feature-discovery
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-rules:
-  - apiGroups:
-      - nfd.k8s-sigs.io
-    resources:
-      - nodefeatures
-    verbs:
-      - create
-      - get
-      - update
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: node-feature-discovery
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
 rules:
   - apiGroups:
       - ""
@@ -216,21 +123,25 @@ rules:
       - create
   - apiGroups:
       - coordination.k8s.io
-    resourceNames:
-      - nfd-master.nfd.kubernetes.io
     resources:
       - leases
+    resourceNames:
+      - "nfd-master.nfd.kubernetes.io"
     verbs:
       - get
       - update
 ---
+# Source: node-feature-discovery/templates/clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: node-feature-discovery-gc
+  name: release-name-node-feature-discovery-gc
   labels:
-    app.kubernetes.io/instance: node-feature-discovery
+    helm.sh/chart: node-feature-discovery-0.18.2
     app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
 rules:
   - apiGroups:
       - ""
@@ -259,3 +170,72 @@ rules:
     verbs:
       - delete
       - list
+---
+# Source: node-feature-discovery/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-name-node-feature-discovery
+  labels:
+    helm.sh/chart: node-feature-discovery-0.18.2
+    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-name-node-feature-discovery
+subjects:
+  - kind: ServiceAccount
+    name: release-name-node-feature-discovery
+    namespace: node-feature-discovery
+---
+# Source: node-feature-discovery/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-name-node-feature-discovery-gc
+  labels:
+    helm.sh/chart: node-feature-discovery-0.18.2
+    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-name-node-feature-discovery-gc
+subjects:
+  - kind: ServiceAccount
+    name: release-name-node-feature-discovery-gc
+    namespace: node-feature-discovery
+---
+# Source: node-feature-discovery/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: release-name-node-feature-discovery-worker
+  namespace: node-feature-discovery
+  labels:
+    helm.sh/chart: node-feature-discovery-0.18.2
+    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups:
+      - nfd.k8s-sigs.io
+    resources:
+      - nodefeatures
+    verbs:
+      - create
+      - get
+      - update
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get

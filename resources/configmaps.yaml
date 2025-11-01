@@ -1,41 +1,32 @@
 ---
+# Source: node-feature-discovery/templates/nfd-master-conf.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: node-feature-discovery-master-conf
+  name: release-name-node-feature-discovery-master-conf
   namespace: node-feature-discovery
   labels:
-    app.kubernetes.io/instance: node-feature-discovery
+    helm.sh/chart: node-feature-discovery-0.18.2
     app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
 data:
-  nfd-master.conf: "null"
+  nfd-master.conf: |-
+    null
 ---
+# Source: node-feature-discovery/templates/nfd-worker-conf.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: node-feature-discovery-topology-updater-conf
+  name: release-name-node-feature-discovery-worker-conf
   namespace: node-feature-discovery
   labels:
-    app.kubernetes.io/instance: node-feature-discovery
+    helm.sh/chart: node-feature-discovery-0.18.2
     app.kubernetes.io/name: node-feature-discovery
-data:
-  nfd-topology-updater.conf: "null"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: node-feature-discovery-worker-conf
-  namespace: node-feature-discovery
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
 data:
   nfd-worker.conf: |-
-    sources:
-      usb:
-        deviceClassWhiteList:
-        - "02"
-        - 0e
-        - ef
-        - fe
-        - ff
+    null

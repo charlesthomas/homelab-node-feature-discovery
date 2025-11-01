@@ -1,137 +1,60 @@
 ---
+# Source: node-feature-discovery/templates/worker.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: node-feature-discovery-topology-updater
+  name: release-name-node-feature-discovery-worker
   namespace: node-feature-discovery
   labels:
-    app.kubernetes.io/instance: node-feature-discovery
+    helm.sh/chart: node-feature-discovery-0.18.2
     app.kubernetes.io/name: node-feature-discovery
-    role: topology-updater
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "v0.18.2"
+    app.kubernetes.io/managed-by: Helm
+    role: worker
 spec:
+  revisionHistoryLimit:
   selector:
     matchLabels:
-      app.kubernetes.io/instance: node-feature-discovery
       app.kubernetes.io/name: node-feature-discovery
-      role: topology-updater
+      app.kubernetes.io/instance: release-name
+      role: worker
   template:
     metadata:
-      annotations:
-        checksum/config: 554b2704b09ea1913744141cc977f013f3eba03e73d2bab762548f93393fb109
-        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
       labels:
-        app.kubernetes.io/instance: node-feature-discovery
         app.kubernetes.io/name: node-feature-discovery
-        role: topology-updater
+        app.kubernetes.io/instance: release-name
+        role: worker
+      annotations:
+        checksum/config: 035ec65cff3c79b131abd5fe3bdf4fe6778a1e3cdb787b8669ddeb2cadf88541
     spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      imagePullSecrets:
+      serviceAccountName: release-name-node-feature-discovery-worker
+      securityContext: {}
+      hostNetwork: false
       containers:
-        - args:
-            - -podresources-socket=/host-var/lib/kubelet-podresources/kubelet.sock
-            - -sleep-interval=1m
-            - -watch-namespace=*
-          command:
-            - nfd-topology-updater
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: NODE_ADDRESS
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-          image: registry.k8s.io/nfd/node-feature-discovery:v0.18.2
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            httpGet:
-              port: 8080
-            initialDelaySeconds: 10
-          name: topology-updater
-          ports:
-            - containerPort: 8081
-              name: metrics
-            - containerPort: 8080
-              name: health
-          readinessProbe:
-            failureThreshold: 10
-            httpGet:
-              port: 8080
-            initialDelaySeconds: 5
-          resources:
-            limits:
-              memory: 60Mi
-            requests:
-              cpu: 50m
-              memory: 40Mi
+        - name: worker
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
             readOnlyRootFilesystem: true
-            runAsUser: 0
-          volumeMounts:
-            - mountPath: /host-var/lib/kubelet-podresources/kubelet.sock
-              name: kubelet-podresources-sock
-            - mountPath: /host-sys
-              name: host-sys
-            - mountPath: /host-var/lib/kubelet
-              name: kubelet-state-files
-              readOnly: true
-            - mountPath: /etc/kubernetes/node-feature-discovery
-              name: nfd-topology-updater-conf
-              readOnly: true
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: false
-      securityContext: {}
-      serviceAccountName: nfd-topology-updater
-      volumes:
-        - hostPath:
-            path: /sys
-          name: host-sys
-        - hostPath:
-            path: /var/lib/kubelet/pod-resources/kubelet.sock
-          name: kubelet-podresources-sock
-        - hostPath:
-            path: /var/lib/kubelet
-          name: kubelet-state-files
-        - configMap:
-            items:
-              - key: nfd-topology-updater.conf
-                path: nfd-topology-updater.conf
-            name: node-feature-discovery-topology-updater-conf
-          name: nfd-topology-updater-conf
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: node-feature-discovery-worker
-  namespace: node-feature-discovery
-  labels:
-    app.kubernetes.io/instance: node-feature-discovery
-    app.kubernetes.io/name: node-feature-discovery
-    role: worker
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/instance: node-feature-discovery
-      app.kubernetes.io/name: node-feature-discovery
-      role: worker
-  template:
-    metadata:
-      annotations:
-        checksum/config: 1f00062212cb74a7f93ed1c43f122d92235dcb2b74d583aa760cea0ae604d909
-        repo: https://github.com/charlesthomas/homelab-node-feature-discovery
-      labels:
-        app.kubernetes.io/instance: node-feature-discovery
-        app.kubernetes.io/name: node-feature-discovery
-        role: worker
-    spec:
-      containers:
-        - args:
-            - -feature-gates=NodeFeatureGroupAPI=false
-          command:
-            - nfd-worker
+            runAsNonRoot: true
+          image: "registry.k8s.io/nfd/node-feature-discovery:v0.18.2"
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            failureThreshold: 10
           env:
             - name: NODE_NAME
               valueFrom:
@@ -145,90 +68,71 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.uid
-          image: registry.k8s.io/nfd/node-feature-discovery:v0.18.2
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            httpGet:
-              port: 8080
-            initialDelaySeconds: 10
-          name: worker
-          ports:
-            - containerPort: 8081
-              name: metrics
-            - containerPort: 8080
-              name: health
-          readinessProbe:
-            failureThreshold: 10
-            httpGet:
-              port: 8080
-            initialDelaySeconds: 5
           resources:
             limits:
               memory: 512Mi
             requests:
               cpu: 5m
               memory: 64Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
+          command:
+            - "nfd-worker"
+          args:
+            # Go over featureGate and add the feature-gate flag
+            - "-feature-gates=NodeFeatureGroupAPI=false"
+            - "-port=8080"
+          ports:
+            - containerPort: 8080
+              name: http
           volumeMounts:
-            - mountPath: /host-boot
-              name: host-boot
+            - name: host-boot
+              mountPath: "/host-boot"
               readOnly: true
-            - mountPath: /host-etc/os-release
-              name: host-os-release
+            - name: host-os-release
+              mountPath: "/host-etc/os-release"
               readOnly: true
-            - mountPath: /host-sys
-              name: host-sys
+            - name: host-sys
+              mountPath: "/host-sys"
               readOnly: true
-            - mountPath: /host-usr/lib
-              name: host-usr-lib
+            - name: host-usr-lib
+              mountPath: "/host-usr/lib"
               readOnly: true
-            - mountPath: /host-lib
-              name: host-lib
+            - name: host-lib
+              mountPath: "/host-lib"
               readOnly: true
-            - mountPath: /host-proc/swaps
-              name: host-proc-swaps
+            - name: host-proc-swaps
+              mountPath: "/host-proc/swaps"
               readOnly: true
-            - mountPath: /etc/kubernetes/node-feature-discovery/features.d/
-              name: features-d
+            - name: features-d
+              mountPath: "/etc/kubernetes/node-feature-discovery/features.d/"
               readOnly: true
-            - mountPath: /etc/kubernetes/node-feature-discovery
-              name: nfd-worker-conf
+            - name: nfd-worker-conf
+              mountPath: "/etc/kubernetes/node-feature-discovery"
               readOnly: true
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: false
-      securityContext: {}
-      serviceAccountName: nfd-worker
       volumes:
-        - hostPath:
-            path: /boot
-          name: host-boot
-        - hostPath:
-            path: /etc/os-release
-          name: host-os-release
-        - hostPath:
-            path: /sys
-          name: host-sys
-        - hostPath:
-            path: /usr/lib
-          name: host-usr-lib
-        - hostPath:
-            path: /lib
-          name: host-lib
-        - hostPath:
-            path: /proc/swaps
-          name: host-proc-swaps
-        - hostPath:
-            path: /etc/kubernetes/node-feature-discovery/features.d/
-          name: features-d
-        - configMap:
+        - name: host-boot
+          hostPath:
+            path: "/boot"
+        - name: host-os-release
+          hostPath:
+            path: "/etc/os-release"
+        - name: host-sys
+          hostPath:
+            path: "/sys"
+        - name: host-usr-lib
+          hostPath:
+            path: "/usr/lib"
+        - name: host-lib
+          hostPath:
+            path: "/lib"
+        - name: host-proc-swaps
+          hostPath:
+            path: "/proc/swaps"
+        - name: features-d
+          hostPath:
+            path: "/etc/kubernetes/node-feature-discovery/features.d/"
+        - name: nfd-worker-conf
+          configMap:
+            name: release-name-node-feature-discovery-worker-conf
             items:
               - key: nfd-worker.conf
                 path: nfd-worker.conf
-            name: node-feature-discovery-worker-conf
-          name: nfd-worker-conf
