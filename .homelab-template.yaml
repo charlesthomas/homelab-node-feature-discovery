@@ -1,6 +1,6 @@
 _commit: v1.8.2
 _src_path: /home/crthomas/code/charlesthomas/homelab-template
-additionalResources: 'jobs.yaml'
+additionalResources: ''
 backups: false
 helm: false
 homepageEnabled: false
