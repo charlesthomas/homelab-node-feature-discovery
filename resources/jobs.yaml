@@ -8,6 +8,10 @@ metadata:
     app.kubernetes.io/instance: node-feature-discovery
     app.kubernetes.io/name: node-feature-discovery
 spec:
+  selector:
+    matchLabels:
+      job-name: node-feature-discovery-prune
+      app.kubernetes.io/instance: node-feature-discovery
   template:
     metadata:
       annotations:
@@ -15,6 +19,7 @@ spec:
       labels:
         app.kubernetes.io/instance: node-feature-discovery
         app.kubernetes.io/name: node-feature-discovery
+        job-name: node-feature-discovery-prune
         role: prune
     spec:
       affinity:
