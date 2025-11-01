@@ -43,19 +43,19 @@ spec:
           image: registry.k8s.io/nfd/node-feature-discovery:v0.18.2
           imagePullPolicy: IfNotPresent
           livenessProbe:
-            grpc:
-              port: 8082
+            httpGet:
+              port: 8080
             initialDelaySeconds: 10
           name: topology-updater
           ports:
             - containerPort: 8081
               name: metrics
-            - containerPort: 8082
+            - containerPort: 8080
               name: health
           readinessProbe:
             failureThreshold: 10
-            grpc:
-              port: 8082
+            httpGet:
+              port: 8080
             initialDelaySeconds: 5
           resources:
             limits:
@@ -148,19 +148,19 @@ spec:
           image: registry.k8s.io/nfd/node-feature-discovery:v0.18.2
           imagePullPolicy: IfNotPresent
           livenessProbe:
-            grpc:
-              port: 8082
+            httpGet:
+              port: 8080
             initialDelaySeconds: 10
           name: worker
           ports:
             - containerPort: 8081
               name: metrics
-            - containerPort: 8082
+            - containerPort: 8080
               name: health
           readinessProbe:
             failureThreshold: 10
-            grpc:
-              port: 8082
+            httpGet:
+              port: 8080
             initialDelaySeconds: 5
           resources:
             limits:
