@@ -29,8 +29,6 @@ spec:
             - -podresources-socket=/host-var/lib/kubelet-podresources/kubelet.sock
             - -sleep-interval=1m
             - -watch-namespace=*
-            - -metrics=8081
-            - -grpc-health=8082
           command:
             - nfd-topology-updater
           env:
@@ -132,8 +130,6 @@ spec:
       containers:
         - args:
             - -feature-gates=NodeFeatureGroupAPI=false
-            - -metrics=8081
-            - -grpc-health=8082
           command:
             - nfd-worker
           env:
