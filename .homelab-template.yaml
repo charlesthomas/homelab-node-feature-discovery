@@ -1,6 +1,6 @@
 _commit: v1.8.2
 _src_path: /home/crthomas/code/charlesthomas/homelab-template
-additionalResources: ''
+additionalResources: 'daemonsets.yaml'
 backups: false
 helm: false
 homepageEnabled: false
@@ -13,7 +13,6 @@ reloader: false
 resources:
 - configmaps.yaml
 - crds.yaml
-- daemonsets.yaml
 - deployments.yaml
 - rbac.yaml
 - service-accounts.yaml
