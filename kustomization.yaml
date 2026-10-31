@@ -5,8 +5,10 @@ namespace: node-feature-discovery
 
 commonAnnotations:
   repo: https://github.com/charlesthomas/homelab-node-feature-discovery
-commonLabels:
-  app.kubernetes.io/name: node-feature-discovery
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/name: node-feature-discovery
 
 resources:
 - resources/configmaps.yaml
