@@ -5,8 +5,10 @@ namespace: node-feature-discovery
 
 commonAnnotations:
   repo: https://github.com/charlesthomas/homelab-node-feature-discovery
-commonLabels:
-  app.kubernetes.io/name: node-feature-discovery
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/name: node-feature-discovery
 
 resources:
 - resources/configmaps.yaml
@@ -16,3 +18,11 @@ resources:
 - resources/namespaces.yaml
 - resources/rbac.yaml
 - resources/service-accounts.yaml
+configMapGenerator:
+- name: grafana-dashboard-node-feature-discovery
+  files:
+  - grafana/node-feature-discovery.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
